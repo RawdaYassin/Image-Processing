@@ -13,12 +13,13 @@ class ImageProcessingApp:
     def __init__(self, root):
         self.root = root
         self.root.title("Advanced Image Processing Toolbox")
-        self.root.geometry("1200x800")
+        self.root.geometry("600x400")
 
         # Variables to store images
         self.original_image = None
         self.processed_image = None
         self.detect_type = "SOBEL"
+        self.threshold = 128
 
         # Initialize UI components
         self.init_ui()
@@ -41,7 +42,7 @@ class ImageProcessingApp:
         self.processed_label = tk.Label(right_frame, text="Processed Image", bg="gray", fg="white")
         self.processed_label.pack(fill=tk.BOTH, expand=True, pady=5)
 
-        # Middle Frame: Buttons for operations
+        # Middle Frame: Buttons for operations """"
         middle_frame = tk.Frame(self.root, bg="lightgray")
         middle_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
 
@@ -58,14 +59,28 @@ class ImageProcessingApp:
         for group_name, buttons in operations.items():
             self.create_operation_group(middle_frame, group_name, buttons)
 
-    def create_operation_group(self, parent, group_name, operations):
-        """Create a group of related operations."""
-        frame = ttk.LabelFrame(parent, text=group_name)
-        frame.pack(fill=tk.X, pady=5)
+    # def create_operation_group(self, parent, group_name, operations):
+    #     """Create a group of related operations."""
+    #     frame = ttk.LabelFrame(parent, text=group_name)
+    #     frame.pack(fill=tk.X, pady=5)
 
-        for operation in operations:
-            button = tk.Button(frame, text=operation, command=lambda op=operation: self.handle_operation(op))
-            button.pack(side=tk.LEFT, padx=5, pady=5)
+    #     for operation in operations:
+    #         button = tk.Button(frame, text=operation, command=lambda op=operation: self.handle_operation(op))
+    #         button.pack(side=tk.LEFT, padx=5, pady=5)
+    def create_operation_group(self, parent, group_name, operations):
+        """Create a group of related operations with one button per row."""
+        frame = ttk.LabelFrame(parent, text=group_name, padding=(10, 5))
+        frame.pack(fill=tk.X, pady=5, padx=10)
+
+        for index, operation in enumerate(operations):
+            button = tk.Button(
+                frame, text=operation, width=25, 
+                command=lambda op=operation: self.handle_operation(op)
+            )
+            # Place each button on a new row
+            button.grid(row=index, column=0, padx=5, pady=5, sticky="w")
+            
+
 
     def upload_image(self):
         """Upload an image."""
@@ -136,18 +151,42 @@ class ImageProcessingApp:
             print("No Operation Selected")
         self.display_image(self.processed_image, self.processed_label)
 
-    def display_image(self, image, label):
-        """Display an image in a Tkinter Label."""
+        """def display_image(self, image, label):
+        #Display an image in a Tkinter Label.
         if len(image.shape) == 2:  # Grayscale
             image = cv2.cvtColor(image, cv2.COLOR_GRAY2RGB)
         image = Image.fromarray(image)
         image_tk = ImageTk.PhotoImage(image)
 
         label.config(image=image_tk)
+        label.image = image_tk  # Keep a reference to avoid garbage collection"""
+
+    def display_image(self, image, label, max_size=(400, 400)):
+        """Display an image in a Tkinter Label with a maximum size constraint."""
+        # Ensure the image has three channels (convert grayscale to RGB if needed)
+        if len(image.shape) == 2:  # Grayscale
+            image = cv2.cvtColor(image, cv2.COLOR_GRAY2RGB)
+        
+        # Resize the image to fit within the max_size while maintaining aspect ratio
+        height, width = image.shape[:2]
+        max_width, max_height = max_size
+        scaling_factor = min(max_width / width, max_height / height, 1)  # Scale down if larger
+
+        new_width = int(width * scaling_factor)
+        new_height = int(height * scaling_factor)
+        resized_image = cv2.resize(image, (new_width, new_height))
+
+        # Convert to PIL Image and then to ImageTk
+        image_pil = Image.fromarray(resized_image)
+        image_tk = ImageTk.PhotoImage(image_pil)
+
+        # Update the Tkinter label with the resized image
+        label.config(image=image_tk)
         label.image = image_tk  # Keep a reference to avoid garbage collection
+
 
 
 if __name__ == "__main__":
     root = tk.Tk()
     app = ImageProcessingApp(root)
-    root.mainloop()
+    root.mainloop() 
