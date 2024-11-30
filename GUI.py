@@ -169,33 +169,33 @@ class ImageProcessingApp:
         threshold_value = self.threshold.get()  # Retrieve the threshold value
         # Perform operations
         if operation == "Advanced (Error Diffusion)":
-            self.processed_image = halftoning.halftone(self.original_image, 128)
+            self.processed_image = halftoning.error_diffusion(self.original_image)
         elif operation == "Simple (Threshold)":
-            self.processed_image = cv2.threshold(self.original_image, 128, 255, cv2.THRESH_BINARY)
+            self.processed_image = halftoning.simple_threshold(self.original_image)
         elif operation == "View Histogram":
-            self.processed_image = cv2.threshold(self.original_image, 128, 255, cv2.THRESH_BINARY)
+            self.processed_image = histogram.histogram_to_image(self.original_image)
         elif operation == "Histogram Equalization":
-            self.processed_image = cv2.threshold(self.original_image, 128, 255, cv2.THRESH_BINARY)
+            self.processed_image =  histogram.histogram_equalization(self.original_image)
         elif operation == "Sobel Operator":
             self.processed_image = basic_edge_detection.detect_edges(self.original_image, "SOBEL", threshold_value)
         elif operation == "Prewitt Operator":
             self.processed_image = basic_edge_detection.detect_edges(self.original_image, "PREWITT", threshold_value)
-        elif operation == "Kirsch  Compass":
+        elif operation == "Kirsch Compass":
            self.processed_image = basic_edge_detection.detect_edges(self.original_image, "KIRSCH", threshold_value)
         elif operation == "Homogeneity Operator":
             self.processed_image = advanced_edge_detection.homogeneity(self.original_image, threshold_value)
         elif operation == "Difference Operator":
             self.processed_image = advanced_edge_detection.difference_edge(self.original_image, threshold_value)
-        elif operation == "Differenece of Gaussian (7x7)":
+        elif operation == "Difference of Gaussian (7x7)":
             self.processed_image = advanced_edge_detection.gaussian_difference(self.original_image, threshold_value, "7x7")
-        elif operation == "Differenece of Gaussian (9x9)":
+        elif operation == "Difference of Gaussian (9x9)":
             self.processed_image = advanced_edge_detection.gaussian_difference(self.original_image, threshold_value, "9x9")
         elif operation == "Range":
             self.processed_image = advanced_edge_detection.range_filter(self.original_image, threshold_value, 3)
         elif operation == "Variance":
             self.processed_image = advanced_edge_detection.variance_filter(self.original_image, threshold_value, 3)
         elif operation == "Contrast-Based":
-            self.processed_image = advanced_edge_detection.homogeneity(self.original_image, self.detect_type, threshold_value)
+            self.processed_image = advanced_edge_detection.contrast_edge(self.original_image, "LAPLACE", threshold_value)
         elif operation == "High-Pass Filter":
             self.processed_image = cv2.threshold(self.original_image, 128, 255, cv2.THRESH_BINARY)
         elif operation == "Low-Pass Filter":

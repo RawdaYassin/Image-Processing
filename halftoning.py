@@ -1,8 +1,24 @@
 
 import numpy as np
 
-def halftone(original_image, threshold):
-    # Ensure the image is in grayscale
+
+
+import numpy as np
+
+def calculate_threshold(original_image):
+    threshold = int(np.mean(original_image))
+    return threshold
+
+def simple_threshold(original_image):
+    threshold = calculate_threshold()
+    output_image = np.where(original_image > threshold, 255, 0).astype(np.uint8)
+    return output_image
+
+
+
+
+def error_diffusion(original_image):
+    threshold = calculate_threshold(original_image)
     rows, columns = original_image.shape
     original_image = original_image.astype(np.float32)
     output_image = np.zeros_like(original_image, dtype=np.uint8)
@@ -21,7 +37,6 @@ def halftone(original_image, threshold):
                 original_image[y + 1, x] += quantity_error * 5 / 16
                 if x + 1 < columns:
                     original_image[y + 1, x + 1] += quantity_error * 1 / 16
-
     return output_image
 
 
