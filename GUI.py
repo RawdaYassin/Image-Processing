@@ -7,7 +7,7 @@ import halftoning
 import histogram
 import basic_edge_detection
 import advanced_edge_detection
-import manual_threshold_segmentation
+import segmentation
 
 
 class ImageProcessingApp:
@@ -210,7 +210,8 @@ class ImageProcessingApp:
         elif operation == "Add Images":
             self.processed_image = cv2.threshold(self.original_image, 128, 255, cv2.THRESH_BINARY)
         elif operation == "Manual Technique":
-            self.processed_image = manual_threshold_segmentation.manual_threshold_segmentation(self.original_image, 255, 255, 255, 1)
+            rows, columns = self.original_image.shape
+            self.processed_image = segmentation.manual_threshold_segmentation(self.original_image, 255, 255, 255, 1)
         elif operation == "Peak Technique":
             self.processed_image = cv2.threshold(self.original_image, 128, 255, cv2.THRESH_BINARY)
         elif operation == "Valley Technique":
