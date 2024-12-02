@@ -7,7 +7,7 @@ import halftoning
 import histogram
 import basic_edge_detection
 import advanced_edge_detection
-import segmentation
+
 
 
 
