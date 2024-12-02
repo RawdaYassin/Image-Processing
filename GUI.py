@@ -7,6 +7,7 @@ import halftoning
 import histogram
 import basic_edge_detection
 import advanced_edge_detection
+import manual_threshold_segmentation
 
 
 class ImageProcessingApp:
@@ -173,7 +174,7 @@ class ImageProcessingApp:
         elif operation == "Simple (Threshold)":
             self.processed_image = halftoning.simple_threshold(self.original_image)
         elif operation == "View Histogram":
-            self.processed_image = histogram.histogram_to_image(self.original_image)
+            self.processed_image = histogram.display_histogram(self.original_image)
         elif operation == "Histogram Equalization":
             self.processed_image =  histogram.histogram_equalization(self.original_image)
         elif operation == "Sobel Operator":
@@ -209,7 +210,7 @@ class ImageProcessingApp:
         elif operation == "Add Images":
             self.processed_image = cv2.threshold(self.original_image, 128, 255, cv2.THRESH_BINARY)
         elif operation == "Manual Technique":
-            self.processed_image = cv2.threshold(self.original_image, 128, 255, cv2.THRESH_BINARY)
+            self.processed_image = manual_threshold_segmentation.manual_threshold_segmentation(self.original_image, 255, 255, 255, 1)
         elif operation == "Peak Technique":
             self.processed_image = cv2.threshold(self.original_image, 128, 255, cv2.THRESH_BINARY)
         elif operation == "Valley Technique":
