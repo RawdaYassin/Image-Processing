@@ -30,7 +30,6 @@ def find_peaks(histogram, peak_space=10):
     else:
         return None, None
 
-
 # Determine high and low threshold values based on the valley between two peaks.
 def valley_high_low(histogram, peak1, peak2, gray_levels):
     valley_point = find_valley_point(histogram, peak1, peak2)

@@ -96,7 +96,6 @@ def threshold_and_find_means(in_image, out_image, hi, low, value, object_mean, b
     # Optionally return means if needed
     # return object_mean_value, background_mean_value
 
-
 # Perform adaptive threshold segmentation on an image.
 def adaptive_threshold_segmentation(the_image, out_image, value, segment, rows, cols, gray_levels=256, peak_space=10):
 

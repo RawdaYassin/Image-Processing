@@ -2,6 +2,15 @@ from PIL import Image
 import numpy as np
 
 
+
+def threshold_image_array(in_image, out_image, hi, low, value, rows, cols):
+    for i in range(rows):
+        for j in range(cols):
+            if low <= in_image[i][j] <= hi:
+                out_image[i][j] = value
+            else:
+                out_image[i][j] = 0
+                
 # Labels a pixel with an object label and checks its 8 neighbors.If any of the neighbors have the 'value', they are added to the stack for further labeling.
 def label_and_check_neighbor(binary_image, g_label, r, e, value, first_call, rows, cols, stack):
     # Check if the current pixel has already been labeled
@@ -56,12 +65,12 @@ def manual_threshold_segmentation(the_image, hi, low, value, segment):
     # Threshold the image array
     out_image = np.zeros_like(the_image, dtype=np.int32)
     rows, cols = the_image.shape
-    #threshold_image_array(the_image, out_image, hi, low, value, rows, cols)
-    out_image = np.where(low <= the_image <= hi, value, 0).astype(np.uint8)
+    #
+    #out_image = np.where(low <= the_image and the_image<= hi, value, 0).astype(np.uint8)
     # Perform segmentation if segment parameter is set to 1
     if segment == 1:
         grow(out_image, value, rows, cols)
-
+    threshold_image_array(the_image, out_image, hi, low, value, rows, cols)
     return out_image.astype(np.uint8)
 
 

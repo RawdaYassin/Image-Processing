@@ -9,10 +9,7 @@ import halftoning
 import histogram
 import basic_edge_detection
 import advanced_edge_detection
-import manual_threshold_segmentation
-import adaptive_threshold_segmentation
-import valley_threshold_segmentation
-import peak_threshold_segmentation
+import segmentation
 
 
 class ImageProcessingApp:
@@ -30,7 +27,8 @@ class ImageProcessingApp:
         self.high = tk.IntVar(value=255)  # High threshold for manual segmentation
         self.low = tk.IntVar(value=255)    # Low threshold for manual segmentation
         self.segment = tk.IntVar(value=0)  # Default segmentation technique
-
+        self.peak_space = tk.IntVar(value = 10)
+        self.value = 255
         # Initialize UI components
         self.init_ui()
 
@@ -180,6 +178,14 @@ class ImageProcessingApp:
                         operation_frame, textvariable=self.high, width=5, font=("Helvetica", 10)
                     )
                     high_entry.pack(side=tk.LEFT, padx=5)
+                else:
+                    low_label = tk.Label(operation_frame, text="Peak Space:", font=("Helvetica", 10), bg="lightgray")
+                    low_label.pack(side=tk.LEFT, padx=5)
+                    low_entry = tk.Entry(
+                        operation_frame, textvariable=self.peak_space, width=5, font=("Helvetica", 10)
+                    )
+                    low_entry.pack(side=tk.LEFT, padx=5)
+
 
                 # Segment Type (Manual, Peak, Valley, Adaptive)
                 segment_label = tk.Label(operation_frame, text="Segment:", font=("Helvetica", 10), bg="lightgray")
@@ -214,6 +220,7 @@ class ImageProcessingApp:
         low_value = self.low.get()  # Retrieve the low threshold for manual technique
         high_value = self.high.get()  # Retrieve the high threshold for manual technique
         segment_value = self.segment.get()  # Retrieve selected segmentation type
+        peak_space = self.peak_space.get()
         rows, columns = self.original_image.shape
         out_image = np.zeros_like(self.original_image)
         # Perform operations
@@ -258,15 +265,15 @@ class ImageProcessingApp:
         elif operation == "Add Images":
             self.processed_image = cv2.threshold(self.original_image, 128, 255, cv2.THRESH_BINARY)
         elif operation == "Manual Technique":
-            self.processed_image = manual_threshold_segmentation.manual_threshold_segmentation(self.original_image, high_value, low_value)
+            self.processed_image = segmentation.manual_threshold_segmentation(self.original_image, high_value, low_value ,self.value,  segment_value)
         elif operation == "Peak Technique":
-            peak_threshold_segmentation.peak_threshold_segmentation(self.original_image, out_image, self.value , segment_value, rows, columns, peak_space=1)
+            segmentation.peak_threshold_segmentation(self.original_image, out_image, self.value ,  segment_value,  rows, columns, peak_space)
             self.processed_image = out_image.astype(np.uint8)
         elif operation == "Valley Technique":
-            valley_threshold_segmentation.valley_threshold_segmentation(self.original_image, out_image, self.value , segment_value, rows, columns, peak_space=5)
+            segmentation.valley_threshold_segmentation(self.original_image, out_image, self.value ,  segment_value,  rows, columns, peak_space)
             self.processed_image = out_image.astype(np.uint8)
         elif operation == "Adaptive Technique":
-            adaptive_threshold_segmentation.adaptive_threshold_segmentation(self.original_image, out_image, self.value , segment_value, rows, columns, peak_space=10)
+            segmentation.adaptive_threshold_segmentation(self.original_image, out_image, self.value ,  segment_value, rows, columns,peak_space)
             self.processed_image = out_image.astype(np.uint8)        
         else:
             print("No Operation Selected")
