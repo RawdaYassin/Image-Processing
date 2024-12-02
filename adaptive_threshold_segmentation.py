@@ -2,17 +2,6 @@ import numpy as np
 from PIL import Image
 import histogram
 
-def smooth_histogram(histogram, gray_levels):
-    smoothed = np.zeros_like(histogram)
-    smoothed[0] = (histogram[0] + histogram[1]) // 2
-    smoothed[-1] = (histogram[-1] + histogram[-2]) // 2
-
-    for i in range(1, gray_levels - 1):
-        smoothed[i] = (histogram[i - 1] + histogram[i] + histogram[i + 1]) // 3
-
-    for i in range(gray_levels):
-        histogram[i] = smoothed[i]
-
 
 # Find local maxima (peaks) in the histogram with minimum distance `peak_space`.
 def find_peaks(histogram, peak_space=10):
@@ -64,50 +53,6 @@ def peaks_high_low(histogram, peak1, peak2, gray_levels):
     return hi, low
 
 
-# def threshold_and_find_means(in_image, out_image, hi, low, value, object_mean, background_mean, rows, cols):
-#     """
-#     Thresholds an input image array and produces a binary output image array.
-#     If the pixel in the input array is between the hi and low values, then it is set to value.
-#     Otherwise, it is set to 0.
-#     It also calculates the mean pixel intensity for the object and background.
-#     """
-#     counter = 0
-#     object_sum = 0
-#     background_sum = 0
-
-#     # Iterate over the image dimensions
-#     for i in range(rows):
-#         for j in range(cols):
-#             pixel_value = in_image[i, j]
-
-#             if low <= pixel_value <= hi:
-#                 out_image[i, j] = value
-#                 counter += 1
-#                 object_sum += pixel_value
-#             else:
-#                 out_image[i, j] = 0
-#                 background_sum += pixel_value
-
-#     # Calculate object and background means
-#     if counter > 0:
-#         object_mean_value = object_sum / counter
-#     else:
-#         object_mean_value = 0
-
-#     background_count = (rows * cols) - counter
-#     if background_count > 0:
-#         background_mean_value = background_sum / background_count
-#     else:
-#         background_mean_value = 0
-
-#     # Update the object_mean and background_mean references
-#     object_mean[0] = int(object_mean_value)
-#     background_mean[0] = int(background_mean_value)
-
-#     # Debug print statements
-#     # print(f"\n\tTAFM> set {counter} points")
-#     # print(f"\n\tTAFM> object={object_mean[0]} background={background_mean[0]}")
-
 def threshold_and_find_means(in_image, out_image, hi, low, value, object_mean, background_mean, rows, cols):
     """
     Thresholds an input image array and produces a binary output image array.
@@ -152,16 +97,6 @@ def threshold_and_find_means(in_image, out_image, hi, low, value, object_mean, b
     # return object_mean_value, background_mean_value
 
 
-
-def threshold_image_array(in_image, out_image, hi, low, value, rows, cols):
-    for i in range(rows):
-        for j in range(cols):
-            if low <= in_image[i][j] <= hi:
-                out_image[i][j] = value
-            else:
-                out_image[i][j] = 0
-
-
 # Perform adaptive threshold segmentation on an image.
 def adaptive_threshold_segmentation(the_image, out_image, value, segment, rows, cols, gray_levels=256, peak_space=10):
 
@@ -169,7 +104,7 @@ def adaptive_threshold_segmentation(the_image, out_image, value, segment, rows, 
     equalized_image= histogram.histogram_equalization(the_image)
     equalized_histogram, _, _ = histogram.create_histogram(
         np.array(equalized_image).flatten())
-    smooth_histogram(equalized_histogram, gray_levels)
+    histogram.smooth_histogram(equalized_histogram, gray_levels)
 
     # Use the smoothed equalized histogram for peak detection
     peak1, peak2 = find_peaks(equalized_histogram, peak_space)
@@ -192,9 +127,9 @@ def adaptive_threshold_segmentation(the_image, out_image, value, segment, rows, 
     hi, low = peaks_high_low(
         equalized_histogram, object_mean[0], background_mean[0], gray_levels)
     # Debug: Print updated thresholds
-    print(f"Updated Thresholds: hi={hi}, low={low}")
-
-    threshold_image_array(the_image, out_image, hi, low, value, rows, cols)
+    #print(f"Updated Thresholds: hi={hi}, low={low}")
+    out_image = np.where(low <= the_image <= hi, value, 0).astype(np.uint8)
+    #threshold_image_array(the_image, out_image, hi, low, value, rows, cols)
 
 
 ################################################################################################################

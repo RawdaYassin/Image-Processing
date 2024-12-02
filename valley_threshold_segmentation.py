@@ -2,17 +2,6 @@ import numpy as np
 from PIL import Image
 import histogram
 
-def smooth_histogram(histogram, gray_levels):
-    smoothed = np.zeros_like(histogram)
-    smoothed[0] = (histogram[0] + histogram[1]) // 2
-    smoothed[-1] = (histogram[-1] + histogram[-2]) // 2
-
-    for i in range(1, gray_levels - 1):
-        smoothed[i] = (histogram[i - 1] + histogram[i] + histogram[i + 1]) // 3
-
-    for i in range(gray_levels):
-        histogram[i] = smoothed[i]
-
 
 # Find local maxima (peaks) in the histogram with minimum distance `peak_space`.
 def find_peaks(histogram, peak_space=10):
@@ -78,14 +67,6 @@ def insert_into_deltas(deltas, value, place):
             break
 
 
-def threshold_image_array(in_image, out_image, hi, low, value, rows, cols):
-    for i in range(rows):
-        for j in range(cols):
-            if low <= in_image[i, j] <= hi:
-                out_image[i, j] = value
-            else:
-                out_image[i, j] = 0
-
 
 # Segment an image using histogram valley-based thresholding.
 def valley_threshold_segmentation(the_image, out_image, value, segment, rows, cols, gray_levels=256, peak_space=10):
@@ -93,13 +74,14 @@ def valley_threshold_segmentation(the_image, out_image, value, segment, rows, co
     equalized_image= histogram.histogram_equalization(the_image)
     equalized_histogram, _, _ = histogram.create_histogram(
         np.array(equalized_image).flatten())
-    smooth_histogram(equalized_histogram, gray_levels)
+    histogram.smooth_histogram(equalized_histogram, gray_levels)
 
     # Use the smoothed equalized histogram for peak detection
     peak1, peak2 = find_peaks(equalized_histogram, peak_space)
     hi, low = valley_high_low(equalized_histogram, peak1, peak2, gray_levels)
 
-    threshold_image_array(the_image, out_image, hi, low, value, rows, cols)
+    #threshold_image_array(the_image, out_image, hi, low, value, rows, cols)
+    out_image = np.where(low <= the_image <= hi, value, 0).astype(np.uint8)
 
 
 ################################################################################################################

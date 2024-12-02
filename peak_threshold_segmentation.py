@@ -2,72 +2,6 @@ import numpy as np
 from PIL import Image
 import histogram
 
-# def calculate_cumulative_histogram(hist):
-#     cdf = np.zeros_like(hist, dtype=hist.dtype)
-#     cdf[0] = hist[0]
-
-#     for i in range(1, len(hist)):
-#         cdf[i] = cdf[i - 1] + hist[i]
-
-#     return cdf
-
-
-# def create_histogram(data, num_bins=256):
-#     min_val = min(data)
-#     max_val = max(data)
-#     bin_width = (max_val - min_val) / num_bins
-#     histogram = np.zeros(num_bins, dtype=int)
-
-#     for value in data:
-#         bin_index = int((value - min_val) // bin_width)
-
-#         # Ensure maximum value doesn't cause an out-of-bounds error.
-#         if bin_index == num_bins:
-#             bin_index = num_bins - 1
-#         histogram[bin_index] += 1
-
-#     return histogram, min_val, bin_width
-
-
-# def histogram_equalization(image):
-#     # Check if the image is a PIL Image, if not, convert it
-#     if isinstance(image, np.ndarray):
-#         image = Image.fromarray(image)
-
-#     if image.mode != 'L':
-#         image = image.convert('L')  # Convert to grayscale if not already
-
-#     img_array = np.array(image)
-#     flat = img_array.flatten()
-
-#     # Create histogram
-#     hist, min_val, bin_width = create_histogram(flat, num_bins=256)
-
-#     # Calculate CDF
-#     cdf = calculate_cumulative_histogram(hist)
-#     cdf_normalized = cdf * 255 / cdf[-1]
-
-#     # Perform histogram equalization
-#     equalized_flat = np.interp(flat, np.arange(
-#         min_val, min_val + 256 * bin_width, bin_width), cdf_normalized)
-#     equalized_img_array = equalized_flat.reshape(img_array.shape)
-#     equalized_image = Image.fromarray(equalized_img_array.astype(np.uint8))
-
-#     return equalized_image, hist, cdf  # Return the image, histogram, and CDF
-
-
-def smooth_histogram(histogram, gray_levels):
-    smoothed = np.zeros_like(histogram)
-    smoothed[0] = (histogram[0] + histogram[1]) // 2
-    smoothed[-1] = (histogram[-1] + histogram[-2]) // 2
-
-    for i in range(1, gray_levels - 1):
-        smoothed[i] = (histogram[i - 1] + histogram[i] + histogram[i + 1]) // 3
-
-    for i in range(gray_levels):
-        histogram[i] = smoothed[i]
-
-
 # Find local maxima (peaks) in the histogram with minimum distance `peak_space`.
 def find_peaks(histogram, peak_space=10):
     peaks = []
@@ -118,22 +52,13 @@ def peaks_high_low(histogram, peak1, peak2, gray_levels):
     return hi, low
 
 
-def threshold_image_array(in_image, out_image, hi, low, value, rows, cols):
-    for i in range(rows):
-        for j in range(cols):
-            if low <= in_image[i, j] <= hi:
-                out_image[i, j] = value
-            else:
-                out_image[i, j] = 0
-
-
 def peak_threshold_segmentation(the_image, out_image, value, rows, cols, gray_levels=256, peak_space=10):
 
     # Perform histogram equalization and smoothing
     equalized_image = histogram.histogram_equalization(the_image)
     equalized_histogram, _, _ = histogram.create_histogram(
         np.array(equalized_image).flatten())
-    smooth_histogram(equalized_histogram, gray_levels)
+    histogram.smooth_histogram(equalized_histogram, gray_levels)
 
     # Use the smoothed equalized histogram for peak detection
     peak1, peak2 = find_peaks(equalized_histogram, peak_space)
@@ -142,9 +67,8 @@ def peak_threshold_segmentation(the_image, out_image, value, rows, cols, gray_le
         return
 
     hi, low = peaks_high_low(equalized_histogram, peak1, peak2, gray_levels)
-
-    threshold_image_array(the_image, out_image,
-                          hi, low, value, rows, cols)
+    out_image = np.where(low <= the_image <= hi, value, 0).astype(np.uint8)
+    #threshold_image_array(the_image, out_image, hi, low, value, rows, cols)
 
 
 ################################################################################################################

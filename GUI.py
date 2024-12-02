@@ -1,3 +1,5 @@
+
+
 import tkinter as tk
 from tkinter import filedialog, ttk
 from PIL import Image, ImageTk
@@ -7,8 +9,10 @@ import halftoning
 import histogram
 import basic_edge_detection
 import advanced_edge_detection
-
-
+import manual_threshold_segmentation
+import adaptive_threshold_segmentation
+import valley_threshold_segmentation
+import peak_threshold_segmentation
 
 
 class ImageProcessingApp:
@@ -23,6 +27,9 @@ class ImageProcessingApp:
         self.processed_image = None
         self.detect_type = "SOBEL"
         self.threshold = tk.IntVar(value=128)  # Default threshold value
+        self.high = tk.IntVar(value=255)  # High threshold for manual segmentation
+        self.low = tk.IntVar(value=255)    # Low threshold for manual segmentation
+        self.segment = tk.IntVar(value=0)  # Default segmentation technique
 
         # Initialize UI components
         self.init_ui()
@@ -55,19 +62,27 @@ class ImageProcessingApp:
         )
         self.processed_label.pack(fill=tk.BOTH, expand=True, pady=0)
 
-        # Middle Frame: Scrollable Operations
+        # Middle Frame: Scrollable Operations (Horizontal Scroll)
         middle_frame = tk.Frame(main_frame, width=400)
         middle_frame.grid(row=0, column=1, sticky="nsew", padx=5, pady=5)
-
-        # Canvas widget
+        
+        # Canvas widget for both horizontal and vertical scrolling
         canvas = tk.Canvas(middle_frame)
         canvas.grid(row=0, column=0, sticky="nsew")
 
-        # Scrollbar widget
-        scrollbar = tk.Scrollbar(middle_frame, orient="vertical", command=canvas.yview)
-        scrollbar.grid(row=0, column=1, sticky="ns")
+        # Vertical and Horizontal Scrollbars
+        vertical_scrollbar = tk.Scrollbar(middle_frame, orient="vertical", command=canvas.yview)
+        vertical_scrollbar.grid(row=0, column=1, sticky="ns")
 
-        canvas.configure(yscrollcommand=scrollbar.set)
+        horizontal_scrollbar = tk.Scrollbar(middle_frame, orient="horizontal", command=canvas.xview)
+        horizontal_scrollbar.grid(row=1, column=0, sticky="ew")
+
+        canvas.configure(yscrollcommand=vertical_scrollbar.set, xscrollcommand=horizontal_scrollbar.set)
+
+        # Create a frame inside the canvas to hold all operation buttons
+        operation_frame = tk.Frame(canvas)
+        canvas.create_window((0, 0), window=operation_frame, anchor="nw")
+
 
         # Create a frame inside the canvas to hold all operation buttons
         operation_frame = tk.Frame(canvas)
@@ -149,14 +164,41 @@ class ImageProcessingApp:
                 )
                 threshold_entry.pack(side=tk.LEFT, padx=5)
 
+            # Segmentation Thresholds (low, high) and Segment Type
+            if "Segmentation" in group_name:
+                if operation == "Manual Technique":
+                    low_label = tk.Label(operation_frame, text="Low Threshold:", font=("Helvetica", 10), bg="lightgray")
+                    low_label.pack(side=tk.LEFT, padx=5)
+                    low_entry = tk.Entry(
+                        operation_frame, textvariable=self.low, width=5, font=("Helvetica", 10)
+                    )
+                    low_entry.pack(side=tk.LEFT, padx=5)
+
+                    high_label = tk.Label(operation_frame, text="High Threshold:", font=("Helvetica", 10), bg="lightgray")
+                    high_label.pack(side=tk.LEFT, padx=5)
+                    high_entry = tk.Entry(
+                        operation_frame, textvariable=self.high, width=5, font=("Helvetica", 10)
+                    )
+                    high_entry.pack(side=tk.LEFT, padx=5)
+
+                # Segment Type (Manual, Peak, Valley, Adaptive)
+                segment_label = tk.Label(operation_frame, text="Segment:", font=("Helvetica", 10), bg="lightgray")
+                segment_label.pack(side=tk.LEFT, padx=5)
+                segment_entry = tk.Entry(
+                        operation_frame, textvariable=self.segment, width=5, font=("Helvetica", 10)
+                    )
+                segment_entry.pack(side=tk.LEFT, padx=5)
+                # segment_menu = ttk.Combobox(
+                #     operation_frame, textvariable=self.segment, values=[0 , 1],
+                #     font=("Helvetica", 10)
+                # )
+                # segment_menu.pack(side=tk.LEFT, padx=5)
+
     def upload_image(self):
         """Upload an image."""
         image_path = filedialog.askopenfilename(
             title="Open Image File",
-            filetypes=[
-                ("Image files", "*.png;*.jpg;*.jpeg;*.bmp;*.tiff;*.gif;*.webp"),
-                ("All files", "*.*"),
-            ],
+            filetypes=[("Image files", "*.png;*.jpg;*.jpeg;*.bmp;*.tiff;*.gif;*.webp"), ("All files", "*.*")]
         )
         if image_path:
             self.original_image = cv2.cvtColor(cv2.imread(image_path), cv2.COLOR_BGR2RGB)
@@ -169,6 +211,11 @@ class ImageProcessingApp:
         if self.original_image is None:
             return
         threshold_value = self.threshold.get()  # Retrieve the threshold value
+        low_value = self.low.get()  # Retrieve the low threshold for manual technique
+        high_value = self.high.get()  # Retrieve the high threshold for manual technique
+        segment_value = self.segment.get()  # Retrieve selected segmentation type
+        rows, columns = self.original_image.shape
+        out_image = np.zeros_like(self.original_image)
         # Perform operations
         if operation == "Advanced (Error Diffusion)":
             self.processed_image = halftoning.error_diffusion(self.original_image)
@@ -211,13 +258,16 @@ class ImageProcessingApp:
         elif operation == "Add Images":
             self.processed_image = cv2.threshold(self.original_image, 128, 255, cv2.THRESH_BINARY)
         elif operation == "Manual Technique":
-            self.processed_image = manual_threshold_segmentation.manual_threshold_segmentation(self.original_image,255, 255, 255, 0)
+            self.processed_image = manual_threshold_segmentation.manual_threshold_segmentation(self.original_image, high_value, low_value)
         elif operation == "Peak Technique":
-            self.processed_image = cv2.threshold(self.original_image, 128, 255, cv2.THRESH_BINARY)
+            peak_threshold_segmentation.peak_threshold_segmentation(self.original_image, out_image, self.value , segment_value, rows, columns, peak_space=1)
+            self.processed_image = out_image.astype(np.uint8)
         elif operation == "Valley Technique":
-            self.processed_image = cv2.threshold(self.original_image, 128, 255, cv2.THRESH_BINARY)
+            valley_threshold_segmentation.valley_threshold_segmentation(self.original_image, out_image, self.value , segment_value, rows, columns, peak_space=5)
+            self.processed_image = out_image.astype(np.uint8)
         elif operation == "Adaptive Technique":
-            self.processed_image = cv2.threshold(self.original_image, 128, 255, cv2.THRESH_BINARY)
+            adaptive_threshold_segmentation.adaptive_threshold_segmentation(self.original_image, out_image, self.value , segment_value, rows, columns, peak_space=10)
+            self.processed_image = out_image.astype(np.uint8)        
         else:
             print("No Operation Selected")
         
@@ -249,80 +299,3 @@ if __name__ == "__main__":
     root = tk.Tk()
     app = ImageProcessingApp(root)
     root.mainloop()
-
-
-
-def threshold_image_array(in_image, out_image, hi, low, value, rows, cols):
-    counter = 0  # Initialize the counter for pixels set to the given value
-
-    # Loop through each pixel in the image
-    for i in range(rows):
-        for j in range(cols):
-            if low <= in_image[i][j] <= hi:
-                out_image[i][j] = value
-                counter += 1
-            else:
-                out_image[i][j] = 0
-
-
-# Labels a pixel with an object label and checks its 8 neighbors.If any of the neighbors have the 'value', they are added to the stack for further labeling.
-def label_and_check_neighbor(binary_image, g_label, r, e, value, first_call, rows, cols, stack):
-    # Check if the current pixel has already been labeled
-    if binary_image[r][e] == g_label:
-        return  # Skip processing if already labeled
-
-    # Label the current pixel
-    binary_image[r][e] = g_label
-
-    # Loop over the 8 neighbors (including diagonals)
-    for i in range(r - 1, r + 2):  # Rows: r-1, r, r+1
-        for j in range(e - 1, e + 2):  # Columns: e-1, e, e+1
-            # Ensure (i, j) are within the bounds of the image
-            if 0 <= i < rows and 0 <= j < cols:
-                # If the neighboring pixel matches the 'value', add it to the stack
-                if binary_image[i][j] == value:
-                    stack.append((i, j))
-
-
-# Detects connected objects in a binary image array and labels them.
-def grow(binary_image, value, rows, cols):
-    g_label = 2  # Start the labeling from 2
-    object_found = False
-    first_call = True
-    stack = []  # Stack for storing coordinates of pixels to process
-
-    for i in range(rows):
-        for j in range(cols):
-            # Search for the first pixel of a region
-            if binary_image[i][j] == value:
-                label_and_check_neighbor(
-                    binary_image, g_label, i, j, value, first_call, rows, cols, stack)
-                object_found = True
-
-            # Process pixels in the stack if it's not empty
-            while len(stack) > 0:
-                pop_i, pop_j = stack.pop()
-                label_and_check_neighbor(
-                    binary_image, g_label, pop_i, pop_j, value, first_call, rows, cols, stack)
-
-            # If an object was found, increment the label
-            if object_found:
-                object_found = False
-                g_label += 1
-
-    # g_label starts from 2, so subtract 2 for the actual count
-    print(f"GROW> found {g_label - 2} objects")
-
-
-# Segments an image using thresholding given the high and low threshold values.
-def manual_threshold_segmentation(the_image, hi, low, value, segment):
-    # Threshold the image array
-    out_image = np.zeros_like(the_image, dtype=np.int32)
-    rows, cols = the_image.shape
-    threshold_image_array(the_image, out_image, hi, low, value, rows, cols)
-
-    # Perform segmentation if segment parameter is set to 1
-    if segment == 1:
-        grow(out_image, value, rows, cols)
-
-    return out_image.astype(np.uint8)
