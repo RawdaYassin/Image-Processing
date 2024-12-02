@@ -1,60 +1,6 @@
 import numpy as np
 from PIL import Image
-
-
-def calculate_cumulative_histogram(hist):
-    cdf = np.zeros_like(hist, dtype=hist.dtype)
-    cdf[0] = hist[0]
-
-    for i in range(1, len(hist)):
-        cdf[i] = cdf[i - 1] + hist[i]
-
-    return cdf
-
-
-def create_histogram(data, num_bins=256):
-    min_val = min(data)
-    max_val = max(data)
-    bin_width = (max_val - min_val) / num_bins
-    histogram = np.zeros(num_bins, dtype=int)
-
-    for value in data:
-        bin_index = int((value - min_val) // bin_width)
-
-        # Ensure maximum value doesn't cause an out-of-bounds error.
-        if bin_index == num_bins:
-            bin_index = num_bins - 1
-        histogram[bin_index] += 1
-
-    return histogram, min_val, bin_width
-
-
-def histogram_equalization(image):
-    # Check if the image is a PIL Image, if not, convert it
-    if isinstance(image, np.ndarray):
-        image = Image.fromarray(image)
-
-    if image.mode != 'L':
-        image = image.convert('L')  # Convert to grayscale if not already
-
-    img_array = np.array(image)
-    flat = img_array.flatten()
-
-    # Create histogram
-    hist, min_val, bin_width = create_histogram(flat, num_bins=256)
-
-    # Calculate CDF
-    cdf = calculate_cumulative_histogram(hist)
-    cdf_normalized = cdf * 255 / cdf[-1]
-
-    # Perform histogram equalization
-    equalized_flat = np.interp(flat, np.arange(
-        min_val, min_val + 256 * bin_width, bin_width), cdf_normalized)
-    equalized_img_array = equalized_flat.reshape(img_array.shape)
-    equalized_image = Image.fromarray(equalized_img_array.astype(np.uint8))
-
-    return equalized_image, hist, cdf  # Return the image, histogram, and CDF
-
+import histogram
 
 def smooth_histogram(histogram, gray_levels):
     smoothed = np.zeros_like(histogram)
@@ -118,6 +64,50 @@ def peaks_high_low(histogram, peak1, peak2, gray_levels):
     return hi, low
 
 
+# def threshold_and_find_means(in_image, out_image, hi, low, value, object_mean, background_mean, rows, cols):
+#     """
+#     Thresholds an input image array and produces a binary output image array.
+#     If the pixel in the input array is between the hi and low values, then it is set to value.
+#     Otherwise, it is set to 0.
+#     It also calculates the mean pixel intensity for the object and background.
+#     """
+#     counter = 0
+#     object_sum = 0
+#     background_sum = 0
+
+#     # Iterate over the image dimensions
+#     for i in range(rows):
+#         for j in range(cols):
+#             pixel_value = in_image[i, j]
+
+#             if low <= pixel_value <= hi:
+#                 out_image[i, j] = value
+#                 counter += 1
+#                 object_sum += pixel_value
+#             else:
+#                 out_image[i, j] = 0
+#                 background_sum += pixel_value
+
+#     # Calculate object and background means
+#     if counter > 0:
+#         object_mean_value = object_sum / counter
+#     else:
+#         object_mean_value = 0
+
+#     background_count = (rows * cols) - counter
+#     if background_count > 0:
+#         background_mean_value = background_sum / background_count
+#     else:
+#         background_mean_value = 0
+
+#     # Update the object_mean and background_mean references
+#     object_mean[0] = int(object_mean_value)
+#     background_mean[0] = int(background_mean_value)
+
+#     # Debug print statements
+#     # print(f"\n\tTAFM> set {counter} points")
+#     # print(f"\n\tTAFM> object={object_mean[0]} background={background_mean[0]}")
+
 def threshold_and_find_means(in_image, out_image, hi, low, value, object_mean, background_mean, rows, cols):
     """
     Thresholds an input image array and produces a binary output image array.
@@ -126,8 +116,11 @@ def threshold_and_find_means(in_image, out_image, hi, low, value, object_mean, b
     It also calculates the mean pixel intensity for the object and background.
     """
     counter = 0
-    object_sum = 0
-    background_sum = 0
+    object_sum = np.int64(0)
+    background_sum = np.int64(0)
+
+    if rows == 0 or cols == 0:
+        return  # Handle empty image case
 
     # Iterate over the image dimensions
     for i in range(rows):
@@ -143,24 +136,21 @@ def threshold_and_find_means(in_image, out_image, hi, low, value, object_mean, b
                 background_sum += pixel_value
 
     # Calculate object and background means
-    if counter > 0:
-        object_mean_value = object_sum / counter
-    else:
-        object_mean_value = 0
-
+    object_mean_value = object_sum / counter if counter > 0 else 0
     background_count = (rows * cols) - counter
-    if background_count > 0:
-        background_mean_value = background_sum / background_count
-    else:
-        background_mean_value = 0
+    background_mean_value = background_sum / background_count if background_count > 0 else 0
 
     # Update the object_mean and background_mean references
     object_mean[0] = int(object_mean_value)
     background_mean[0] = int(background_mean_value)
 
     # Debug print statements
-    print(f"\n\tTAFM> set {counter} points")
-    print(f"\n\tTAFM> object={object_mean[0]} background={background_mean[0]}")
+    # print(f"\n\tTAFM> set {counter} points")
+    # print(f"\n\tTAFM> object={object_mean[0]} background={background_mean[0]}")
+
+    # Optionally return means if needed
+    # return object_mean_value, background_mean_value
+
 
 
 def threshold_image_array(in_image, out_image, hi, low, value, rows, cols):
@@ -176,15 +166,15 @@ def threshold_image_array(in_image, out_image, hi, low, value, rows, cols):
 def adaptive_threshold_segmentation(the_image, out_image, value, segment, rows, cols, gray_levels=256, peak_space=10):
 
     # Perform histogram equalization and smoothing
-    equalized_image, _, _ = histogram_equalization(the_image)
-    equalized_histogram, _, _ = create_histogram(
+    equalized_image= histogram.histogram_equalization(the_image)
+    equalized_histogram, _, _ = histogram.create_histogram(
         np.array(equalized_image).flatten())
     smooth_histogram(equalized_histogram, gray_levels)
 
     # Use the smoothed equalized histogram for peak detection
     peak1, peak2 = find_peaks(equalized_histogram, peak_space)
     if peak1 is None or peak2 is None:
-        print("Error: Insufficient peaks found.")
+        # print("Error: Insufficient peaks found.")
         return
 
     hi, low = peaks_high_low(equalized_histogram, peak1, peak2, gray_levels)
@@ -196,8 +186,8 @@ def adaptive_threshold_segmentation(the_image, out_image, value, segment, rows, 
         the_image, out_image, hi, low, value, object_mean, background_mean, rows, cols
     )
 
-    print(f"Object mean: {object_mean}, Background mean: {
-          background_mean}")  # Debug: Print means
+    # print(f"Object mean: {object_mean}, Background mean: {
+    #       background_mean}")  # Debug: Print means
 
     hi, low = peaks_high_low(
         equalized_histogram, object_mean[0], background_mean[0], gray_levels)
@@ -211,25 +201,25 @@ def adaptive_threshold_segmentation(the_image, out_image, value, segment, rows, 
 ################################################################################################################
 
 
-# Load the image
-input_image = Image.open('Capture.png')
+# # Load the image
+# input_image = Image.open('../Image-Processing/Images/segmentation.png')
 
-# Convert the image to grayscale (if needed) and then to a NumPy array
-grayscale_image = input_image.convert('L')  # Convert to grayscale
-image_array = np.array(grayscale_image)  # Convert to NumPy array
+# # Convert the image to grayscale (if needed) and then to a NumPy array
+# grayscale_image = input_image.convert('L')  # Convert to grayscale
+# image_array = np.array(grayscale_image)  # Convert to NumPy array
 
-# Get the dimensions of the image
-rows, cols = image_array.shape
+# # Get the dimensions of the image
+# rows, cols = image_array.shape
 
-# Create an output image with the same dimensions
-out_image = np.zeros_like(image_array)
-value = 255
+# # Create an output image with the same dimensions
+# out_image = np.zeros_like(image_array)
+# value = 255
 
-# Perform peak threshold segmentation
-adaptive_threshold_segmentation(image_array, out_image,
-                                value, 0, rows, cols, peak_space=10)
+# # Perform peak threshold segmentation
+# adaptive_threshold_segmentation(image_array, out_image,
+#                                 value, 0, rows, cols, peak_space=10)
 
-# Create and show/save the thresholded image
-thresholded_image = Image.fromarray(out_image.astype(np.uint8))
-thresholded_image.show()
-thresholded_image.save('adaptive_thresholded_image.jpg')
+# # Create and show/save the thresholded image
+# thresholded_image = Image.fromarray(out_image.astype(np.uint8))
+# thresholded_image.show()
+# thresholded_image.save('adaptive_thresholded_image.jpg')
