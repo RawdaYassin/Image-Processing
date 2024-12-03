@@ -1,5 +1,3 @@
-
-
 import tkinter as tk
 from tkinter import filedialog, ttk
 from PIL import Image, ImageTk
@@ -10,7 +8,8 @@ import histogram
 import basic_edge_detection
 import advanced_edge_detection
 import segmentation
-
+import Spatial_Frequency
+import image_operations
 
 class ImageProcessingApp:
     def __init__(self, root):
@@ -29,6 +28,8 @@ class ImageProcessingApp:
         self.segment = tk.IntVar(value=0)  # Default segmentation technique
         self.peak_space = tk.IntVar(value = 10)
         self.value = 255
+        self.high_mask = tk.StringVar(value = "First Mask")
+        self.low_mask = tk.StringVar(value = "Mask 6")
         # Initialize UI components
         self.init_ui()
 
@@ -145,8 +146,8 @@ class ImageProcessingApp:
                 operation_frame,
                 text=operation,
                 command=lambda op=operation: self.handle_operation(op),
-                font=("Helvetica", 12),
-                width=25,
+                font=("Helvetica", 10),
+                width=22,
             )
             button.pack(side=tk.LEFT, padx=5)
 
@@ -161,6 +162,24 @@ class ImageProcessingApp:
                     operation_frame, textvariable=self.threshold, width=5, font=("Helvetica", 10)
                 )
                 threshold_entry.pack(side=tk.LEFT, padx=5)
+
+            if "Filtering" in group_name:
+                if operation == "High-Pass Filter":
+                    segment_label = tk.Label(operation_frame, text="High-Pass Mask:", font=("Helvetica", 10), bg="lightgray")
+                    segment_label.pack(side=tk.LEFT, padx=5)
+                    segment_menu = ttk.Combobox(
+                        operation_frame, textvariable=self.high_mask, values=["First Mask" , "Second Mask", "Third Mask"],
+                        font=("Helvetica", 10)
+                    )
+                    segment_menu.pack(side=tk.LEFT, padx=5)
+                if operation == "Low-Pass Filter":
+                    segment_label = tk.Label(operation_frame, text="Low-Pass Mask:", font=("Helvetica", 10), bg="lightgray")
+                    segment_label.pack(side=tk.LEFT, padx=5)
+                    segment_menu = ttk.Combobox(
+                        operation_frame, textvariable=self.low_mask, values=["Mask 6" , "Mask 9", "Mask 10", "Mask 16"],
+                        font=("Helvetica", 10)
+                    )
+                    segment_menu.pack(side=tk.LEFT, padx=5)
 
             # Segmentation Thresholds (low, high) and Segment Type
             if "Segmentation" in group_name:
@@ -221,6 +240,8 @@ class ImageProcessingApp:
         high_value = self.high.get()  # Retrieve the high threshold for manual technique
         segment_value = self.segment.get()  # Retrieve selected segmentation type
         peak_space = self.peak_space.get()
+        high_mask = self.high_mask.get()
+        low_mask = self.low_mask.get()
         rows, columns = self.original_image.shape
         out_image = np.zeros_like(self.original_image)
         # Perform operations
@@ -253,13 +274,13 @@ class ImageProcessingApp:
         elif operation == "Contrast-Based":
             self.processed_image = advanced_edge_detection.contrast_edge(self.original_image, "LAPLACE", threshold_value)
         elif operation == "High-Pass Filter":
-            self.processed_image = cv2.threshold(self.original_image, 128, 255, cv2.THRESH_BINARY)
+           self.processed_image = Spatial_Frequency.conv(self.original_image, high_mask)
         elif operation == "Low-Pass Filter":
-            self.processed_image = cv2.threshold(self.original_image, 128, 255, cv2.THRESH_BINARY)
+            self.processed_image = Spatial_Frequency.conv(self.original_image, low_mask)
         elif operation == "Median Filter":
-            self.processed_image = cv2.threshold(self.original_image, 128, 255, cv2.THRESH_BINARY)
+            self.processed_image = Spatial_Frequency.median_filter(self.original_image)
         elif operation == "Invert Image":
-            self.processed_image = cv2.threshold(self.original_image, 128, 255, cv2.THRESH_BINARY)
+            self.processed_image = image_operations.invert_image(self.original_image)
         elif operation == "Subtract Images":
             self.processed_image = cv2.threshold(self.original_image, 128, 255, cv2.THRESH_BINARY)
         elif operation == "Add Images":
@@ -305,4 +326,4 @@ class ImageProcessingApp:
 if __name__ == "__main__":
     root = tk.Tk()
     app = ImageProcessingApp(root)
-    root.mainloop()
+    root.mainloop() 
