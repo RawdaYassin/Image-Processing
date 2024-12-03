@@ -56,16 +56,30 @@ def conv(image, mask):
     
     return result
 
-def median_filter(image):
+# def median_filter(image, window_size = 3):
    
-    height, width = image.shape
-    filtered_image = np.zeros_like(image)
+#     height, width = image.shape
+#     filtered_image = np.zeros_like(image)
 
-    for i in range(1, height - 1):
-        for j in range(1, width - 1):
-            neighborhood = image[i - 1:i + 2, j - 1:j + 2]
-            median_value = np.median(neighborhood)
-            filtered_image[i, j] = median_value
+#     for i in range(1, height - 1):
+#         for j in range(1, width - 1):
+#             neighborhood = image[i - 1:i + 2, j - 1:j + 2]
+#             median_value = np.median(neighborhood)
+#             filtered_image[i, j] = median_value
 
-    return filtered_image
+#     return filtered_image
+
+
+def median_filter(original_image, window_size = 3):
+    pad_size = window_size // 2
+    padded_image = np.pad(original_image, pad_size, mode='edge')
+    rows, columns = original_image.shape
+    output_image = np.zeros_like(original_image, dtype=np.uint8)
+
+    for i in range(rows):
+        for j in range(columns):
+            local_window = padded_image[i:i + window_size, j:j + window_size]
+            output_image[i, j] = np.median(local_window)
+
+    return output_image
 

@@ -1,10 +1,6 @@
 
 import numpy as np
 
-
-
-import numpy as np
-
 def calculate_threshold(original_image):
     threshold = int(np.mean(original_image))
     return threshold
@@ -13,8 +9,6 @@ def simple_threshold(original_image):
     threshold = calculate_threshold(original_image)
     output_image = np.where(original_image > threshold, 255, 0).astype(np.uint8)
     return output_image
-
-
 
 
 def error_diffusion(original_image):

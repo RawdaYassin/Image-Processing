@@ -29,6 +29,7 @@ class ImageProcessingApp:
         self.segment = tk.IntVar(value=0)  # Default segmentation technique
         self.peak_space = tk.IntVar(value = 10)
         self.value = 255
+        self.window_size = tk.IntVar(value = 3)
         self.high_mask = tk.StringVar(value = "First Mask")
         self.low_mask = tk.StringVar(value = "Mask 6")
         # Initialize UI components
@@ -181,6 +182,17 @@ class ImageProcessingApp:
                         font=("Helvetica", 10)
                     )
                     segment_menu.pack(side=tk.LEFT, padx=5)
+                if operation == "Median Filter":
+                    window_label = tk.Label(
+                        operation_frame, text="Window Size:", font=("Helvetica", 10), bg="lightgray"
+                    )
+                    window_label.pack(side=tk.LEFT, padx=5)
+
+                    window_entry = tk.Entry(
+                        operation_frame, textvariable=self.window_size, width=5, font=("Helvetica", 10)
+                    )
+                    window_entry.pack(side=tk.LEFT, padx=5)
+                    
 
             if "Image Operations" in group_name:
                 if operation == "Add Images" or operation == "Subtract Images":

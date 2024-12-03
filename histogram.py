@@ -1,6 +1,7 @@
 import numpy as np
 from PIL import Image
 import matplotlib as plt
+
 def calculate_cumulative_histogram(hist):
     cdf = np.zeros_like(hist, dtype=hist.dtype)
     cdf[0] = hist[0]
@@ -52,33 +53,3 @@ def smooth_histogram(histogram, gray_levels):
 
     for i in range(gray_levels):
         histogram[i] = smoothed[i]
-
-
-
-# image = Image.open('Screenshot 2024-07-12 002748.png')
-# equalized_image = histogram_equalization(image)
-# equalized_image.show()
-
-
-# def display_histogram(image, num_bins=256):
-
-#     # Compute histogram
-#     histogram, min, w = create_histogram(image)
-#     bins = [256]
-#     # Plot histogram
-#     fig, ax = plt.subplots()
-#     ax.bar(bins[:-1], histogram, width=bins[1] - bins[0], color='black')
-#     ax.set_xlim(0, 255)
-#     ax.set_title("Histogram")
-#     ax.set_xlabel("Pixel Intensity")
-#     ax.set_ylabel("Frequency")
-    
-#     # Save the figure to a NumPy array
-#     fig.canvas.draw()
-#     histogram_array = np.frombuffer(fig.canvas.tostring_rgb(), dtype=np.uint8)
-#     histogram_array = histogram_array.reshape(fig.canvas.get_width_height()[::-1] + (3,))
-    
-#     plt.close(fig)  # Close the plot to free memory
-#     return histogram_array
-
-

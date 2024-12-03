@@ -4,14 +4,11 @@ import matplotlib.pyplot as plt
 import masks
 
 
-
 # Roberts Operator
 # Prewitt Operator
 # Kirsch Compass Masks
 # Robinson Compass Masks
 # Laplacian Operators (Quick mask)
-
-
 
 
 def detect_edges(original_image, detect_type, threshold):
