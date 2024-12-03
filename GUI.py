@@ -20,6 +20,7 @@ class ImageProcessingApp:
 
         # Variables to store images and thresholds
         self.original_image = None
+        self.original_image1 = None
         self.processed_image = None
         self.detect_type = "SOBEL"
         self.threshold = tk.IntVar(value=128)  # Default threshold value
@@ -90,7 +91,7 @@ class ImageProcessingApp:
         # Add the operations
         operations = {
             "Halftoning": ["Simple (Threshold)", "Advanced (Error Diffusion)"],
-            "Histogram": ["View Histogram", "Histogram Equalization"],
+            "Histogram": ["Histogram Equalization"],
             "Basic Edge Detection": ["Sobel Operator", "Prewitt Operator", "Kirsch Compass"],
             "Advanced Edge Detection": [
                 "Homogeneity Operator",
@@ -181,6 +182,14 @@ class ImageProcessingApp:
                     )
                     segment_menu.pack(side=tk.LEFT, padx=5)
 
+            if "Image Operations" in group_name:
+                if operation == "Add Images" or operation == "Subtract Images":
+                    self.upload_button = tk.Button(operation_frame,
+                         text="Upload Second Image", command=self.upload_image2, font=("Helvetica", 10)
+                    )
+                    self.upload_button.pack(pady=5)
+
+
             # Segmentation Thresholds (low, high) and Segment Type
             if "Segmentation" in group_name:
                 if operation == "Manual Technique":
@@ -230,6 +239,18 @@ class ImageProcessingApp:
             self.display_image(self.original_image, self.original_label)
             self.original_image = Image.open(image_path).convert("L")
             self.original_image = np.array(self.original_image)
+    
+    def upload_image2(self):
+        """Upload an image."""
+        image_path = filedialog.askopenfilename(
+            title="Open Image File",
+            filetypes=[("Image files", "*.png;*.jpg;*.jpeg;*.bmp;*.tiff;*.gif;*.webp"), ("All files", "*.*")]
+        )
+        if image_path:
+            self.original_image1 = cv2.cvtColor(cv2.imread(image_path), cv2.COLOR_BGR2RGB)
+            #self.display_image(self.original_image, self.original_label)
+            self.original_image1 = Image.open(image_path).convert("L")
+            self.original_image1 = np.array(self.original_image1)
 
     def handle_operation(self, operation):
         """Handle image processing operation."""
@@ -282,9 +303,9 @@ class ImageProcessingApp:
         elif operation == "Invert Image":
             self.processed_image = image_operations.invert_image(self.original_image)
         elif operation == "Subtract Images":
-            self.processed_image = cv2.threshold(self.original_image, 128, 255, cv2.THRESH_BINARY)
+            self.processed_image = image_operations.subtract_images(self.original_image, self.original_image1)
         elif operation == "Add Images":
-            self.processed_image = cv2.threshold(self.original_image, 128, 255, cv2.THRESH_BINARY)
+            self.processed_image = image_operations.add_images(self.original_image, self.original_image1)
         elif operation == "Manual Technique":
             self.processed_image = segmentation.manual_threshold_segmentation(self.original_image, high_value, low_value ,self.value,  segment_value)
         elif operation == "Peak Technique":
