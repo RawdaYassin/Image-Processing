@@ -53,21 +53,7 @@ def conv(image, mask):
     elif mask == "Mask 16":
         result = cv2.filter2D(image, -1, low_16)
     
-    
     return result
-
-# def median_filter(image, window_size = 3):
-   
-#     height, width = image.shape
-#     filtered_image = np.zeros_like(image)
-
-#     for i in range(1, height - 1):
-#         for j in range(1, width - 1):
-#             neighborhood = image[i - 1:i + 2, j - 1:j + 2]
-#             median_value = np.median(neighborhood)
-#             filtered_image[i, j] = median_value
-
-#     return filtered_image
 
 
 def median_filter(original_image, window_size = 3):

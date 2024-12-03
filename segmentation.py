@@ -63,7 +63,6 @@ def peaks_high_low(histogram, peak1, peak2, gray_levels):
     return hi, low
 
 
-
 # Determine high and low threshold values based on the valley between two peaks.
 def valley_high_low(histogram, peak1, peak2, gray_levels):
     valley_point = find_valley_point(histogram, peak1, peak2)
@@ -231,27 +230,6 @@ def adaptive_threshold_segmentation(the_image, out_image, value, segment, rows, 
     threshold_image_array(the_image, out_image, hi, low, value, rows, cols)
 
 
-# def peak_threshold_segmentation(the_image, out_image, value, rows, cols, segment, peak_space, gray_levels=256):
-
-#     # Perform histogram equalization and smoothing
-#     equalized_image = histogram.histogram_equalization(the_image)
-#     equalized_histogram, _, _ = histogram.create_histogram(
-#         np.array(equalized_image).flatten())
-#     histogram.smooth_histogram(equalized_histogram, gray_levels)
-
-#     # Use the smoothed equalized histogram for peak detection
-#     peak1, peak2 = find_peaks(equalized_histogram, peak_space)
-#     if peak1 is None or peak2 is None:
-#         print("Error: Insufficient peaks found.")
-#         return
-
-#     hi, low = peaks_high_low(equalized_histogram, peak1, peak2, gray_levels)
-#     if segment == 1:
-#         grow(out_image, value, rows, cols)
-        
-#     threshold_image_array(the_image, out_image, hi, low, value, rows, cols)
-
-
 def peak_threshold_segmentation(the_image, out_image, value,segment,  rows, cols, peak_space, gray_levels=256):
 
     # Perform histogram equalization and smoothing
@@ -269,8 +247,6 @@ def peak_threshold_segmentation(the_image, out_image, value,segment,  rows, cols
     hi, low = peaks_high_low(equalized_histogram, peak1, peak2, gray_levels)
     #out_image = np.where(low <= the_image <= hi, value, 0).astype(np.uint8)
     threshold_image_array(the_image, out_image, hi, low, value, rows, cols)
-
-
 
 # Segments an image using thresholding given the high and low threshold values.
 def manual_threshold_segmentation(the_image, hi, low, value, segment):

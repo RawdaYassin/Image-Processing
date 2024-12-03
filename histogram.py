@@ -43,6 +43,9 @@ def histogram_equalization(original_image):
     output_image = equalized_flat.reshape(original_image.shape)
     return output_image.astype(np.uint8)
 
+
+
+
 def smooth_histogram(histogram, gray_levels):
     smoothed = np.zeros_like(histogram)
     smoothed[0] = (histogram[0] + histogram[1]) // 2

@@ -11,6 +11,7 @@ import masks
 # Laplacian Operators (Quick mask)
 
 
+
 def detect_edges(original_image, detect_type, threshold):
     rows, columns = original_image.shape
     if detect_type == "LAPLACE":
